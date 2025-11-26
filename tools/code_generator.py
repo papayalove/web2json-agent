@@ -60,11 +60,50 @@ from pathlib import Path
 ...
 
 ## 使用示例要求
-在 `if __name__ == '__main__'` 部分，生成一个灵活的使用示例：
-1. 支持从命令行参数接收 HTML 文件路径或 URL
-2. 如果是 URL，使用 DrissionPage 的 ChromiumPage 获取 HTML 内容
-3. 如果是文件路径，直接读取文件
-4. 默认参数示例：使用命令行参数 sys.argv[1]，默认为当前目录的 'sample.html'
+在 `if __name__ == '__main__'` 部分，必须生成一个完整的 main 函数，支持两种输入方式：
+
+**main 函数结构：**
+```python
+def main():
+    # 获取命令行参数，默认为 'sample.html'
+    input_source = sys.argv[1] if len(sys.argv) > 1 else 'sample.html'
+    
+    try:
+        # 判断是 URL 还是文件
+        if input_source.startswith('http://') or input_source.startswith('https://'):
+            # URL 处理：使用 DrissionPage
+            try:
+                from DrissionPage import ChromiumPage
+            except ImportError:
+                print(json.dumps({{'error': 'DrissionPage not installed. Install it with: pip install DrissionPage'}}))
+                sys.exit(1)
+            
+            page = ChromiumPage()
+            page.get(input_source)
+            html_content = page.html
+            page.quit()
+        else:
+            # 文件处理：直接读取
+            html_file = Path(input_source)
+            if not html_file.exists():
+                print(json.dumps({{'error': f'File not found: {{html_file}}'}}))
+                sys.exit(1)
+            html_content = html_file.read_text(encoding='utf-8')
+        
+        # 解析并输出结果
+        parser = WebPageParser()
+        result = parser.parse(html_content)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    except Exception as e:
+        print(json.dumps({{'error': str(e)}}))
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()
+```
+
+**注意：必须完整实现上述结构，不要省略任何部分！**
 """
     else:
         # 后续轮：基于前一轮的代码进行优化和补充
@@ -93,13 +132,12 @@ from pathlib import Path
 ```
 
 ## 优化要求
-1. 保留前一轮代码中已有的、正确的字段提取逻辑
+1. 保留前一轮代码中已有的、正确的字段提取逻辑（函数形式）
 2. 添加在前一轮中遗漏的新字段提取逻辑
-3. 根据新HTML样本，调整或改进现有的选择器和提取方法
-4. 增强代码的鲁棒性，处理更多页面变体
-5. 尽量使用类名、ID等稳定属性，避免使用绝对索引
-6. 代码尽量简洁，减少冗余
-7. 添加适当的错误处理
+3. 尽量使用类名、ID等稳定属性，避免使用绝对索引
+4. 代码尽量简洁，减少冗余
+5. 添加适当的错误处理
+6. main函数是固定的，不要修改
 
 ## 输出格式 - 重要！
 **严格要求：**
@@ -117,7 +155,55 @@ from pathlib import Path
 - 检查前一轮代码对新HTML的适配情况
 - 合并两个样本中的选择器策略
 - 确保所有字段都有备选方案
+
+
+## 使用示例要求
+在 `if __name__ == '__main__'` 部分，有一个完整的 main 函数，支持两种输入方式，当前已经实现，请勿修改。
+
+**main 函数结构：**
+```python
+def main():
+    # 获取命令行参数，默认为 'sample.html'
+    input_source = sys.argv[1] if len(sys.argv) > 1 else 'sample.html'
+    
+    try:
+        # 判断是 URL 还是文件
+        if input_source.startswith('http://') or input_source.startswith('https://'):
+            # URL 处理：使用 DrissionPage
+            try:
+                from DrissionPage import ChromiumPage
+            except ImportError:
+                print(json.dumps({{'error': 'DrissionPage not installed. Install it with: pip install DrissionPage'}}))
+                sys.exit(1)
+            
+            page = ChromiumPage()
+            page.get(input_source)
+            html_content = page.html
+            page.quit()
+        else:
+            # 文件处理：直接读取
+            html_file = Path(input_source)
+            if not html_file.exists():
+                print(json.dumps({{'error': f'File not found: {{html_file}}'}}))
+                sys.exit(1)
+            html_content = html_file.read_text(encoding='utf-8')
+        
+        # 解析并输出结果
+        parser = WebPageParser()
+        result = parser.parse(html_content)
+        print(json.dumps(result, ensure_ascii=False, indent=2))
+    except Exception as e:
+        print(json.dumps({{'error': str(e)}}))
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    main()
+```
+
 """
+
+
 
     return prompt
 
@@ -151,13 +237,13 @@ def generate_parser_code(
         else:
             logger.info(f"正在基于前一轮代码优化（第 {round_num} 轮）...")
 
-        # 使用 LangChain 1.0 的 ChatOpenAI
-        from langchain_openai import ChatOpenAI
-
-        model = ChatOpenAI(
+        # 使用封装的 LLMClient 以支持 token 追踪
+        from utils.llm_client import LLMClient
+        
+        llm_client = LLMClient(
             model=settings.code_gen_model,
             api_key=os.getenv("OPENAI_API_KEY"),
-            base_url=os.getenv("OPENAI_API_BASE"),
+            api_base=os.getenv("OPENAI_API_BASE"),
             temperature=settings.code_gen_temperature
         )
 
@@ -178,10 +264,11 @@ def generate_parser_code(
             {"role": "user", "content": prompt}
         ]
 
-        response = model.invoke(messages)
+        # 使用 LLMClient 的 chat_completion 方法（自动记录 token）
+        generated_code = llm_client.chat_completion(messages)
 
-        # 提取生成的代码并清理 markdown 标记
-        generated_code = response.content.strip()
+        # 清理 markdown 标记
+        generated_code = generated_code.strip()
 
         # 移除 markdown 代码块标记
         if generated_code.startswith("```python"):

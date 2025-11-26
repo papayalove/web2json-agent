@@ -199,14 +199,18 @@ class AgentExecutor:
             if field_name not in merged:
                 # 新字段
                 merged[field_name] = field_data.copy()
-                logger.debug(f"  + 新增字段: {field_name}")
+                msg = f"  + 新增字段: {field_name}"
+                logger.debug(msg)
+                print(msg)  # 同时打印到控制台
             else:
                 # 现有字段，更新信息
                 existing = merged[field_name]
                 # 保留现有的类型、描述等，但可以根据需要更新
                 if 'description' in field_data and 'description' not in existing:
                     existing['description'] = field_data['description']
-                logger.debug(f"  ~ 更新字段: {field_name}")
+                msg = f"  ~ 更新字段: {field_name}"
+                logger.debug(msg)
+                print(msg)  # 同时打印到控制台
 
         return merged
 
@@ -303,4 +307,3 @@ class AgentExecutor:
                 logger.debug(f"  可选字段: {field_name} (出现 {count}/{len(samples)} 次)")
 
         return merged_schema
-
