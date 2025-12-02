@@ -22,9 +22,10 @@ from tools import (
 class AgentExecutor:
     """Agent执行器，负责执行具体任务"""
     
-    def __init__(self, output_dir: str = "output"):
+    def __init__(self, output_dir: str = "output", importance_threshold: float = 0.7):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.importance_threshold = importance_threshold
 
         # 创建子目录
         self.screenshots_dir = self.output_dir / "screenshots"
@@ -293,7 +294,8 @@ class AgentExecutor:
                     parser_result = generate_parser_code.invoke({
                         "html_content": html_content,
                         "target_json": final_schema,
-                        "output_dir": str(self.parsers_dir)
+                        "output_dir": str(self.parsers_dir),
+                        "importance_threshold": self.importance_threshold
                     })
                     logger.success(f"  ✓ 初始解析代码已生成")
                 else:
@@ -304,7 +306,8 @@ class AgentExecutor:
                         "output_dir": str(self.parsers_dir),
                         "previous_parser_code": current_parser_code,
                         "previous_parser_path": current_parser_path,
-                        "round_num": idx
+                        "round_num": idx,
+                        "importance_threshold": self.importance_threshold
                     })
                     logger.success(f"  ✓ 解析代码已优化")
 

@@ -110,6 +110,12 @@ def main():
         action='store_true',
         help='跳过验证，直接生成代码'
     )
+    parser.add_argument(
+        '--importance-threshold',
+        type=float,
+        default=0.7,
+        help='重要性评分阈值，只生成评分高于此值的字段（默认: 0.7）'
+    )
 
     args = parser.parse_args()
 
@@ -138,7 +144,10 @@ def main():
     logger.info("="*70)
 
     # 创建Agent
-    agent = ParserAgent(output_dir=args.output)
+    agent = ParserAgent(
+        output_dir=args.output,
+        importance_threshold=args.importance_threshold
+    )
 
     # 生成解析器
     result = agent.generate_parser(
