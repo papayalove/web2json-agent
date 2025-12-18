@@ -4,11 +4,9 @@ Prompts 模块
 """
 
 from .code_generator import CodeGeneratorPrompts
-from .code_fixer import CodeFixerPrompts
-from .visual_understanding import VisualUnderstandingPrompts
+from .schema_extraction import SchemaExtractionPrompts
 
 __all__ = [
     'CodeGeneratorPrompts',
-    'CodeFixerPrompts',
-    'VisualUnderstandingPrompts',
+    'SchemaExtractionPrompts',
 ]
