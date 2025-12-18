@@ -57,7 +57,6 @@
 - **多路径鲁棒性**：每个字段保留多个xpath提取路径，适应不同页面结构
 - **智能Schema合并**：自动识别相同字段、修正字段类型、优化数据结构
 - **HTML精简**：使用自定义HTML精简工具，减少token消耗，提升响应速度
-- **Token 跟踪**：实时监控 API 调用成本
 
 ---
 
@@ -110,10 +109,6 @@ OPENAI_API_BASE=https://api.openai.com/v1  # API 地址
 AGENT_MODEL=claude-sonnet-4-5-20250929      # Agent 使用的模型
 CODE_GEN_MODEL=claude-sonnet-4-5-20250929   # 代码生成模型
 VISION_MODEL=qwen-vl-max                     # 视觉理解模型
-
-# Agent 配置
-MAX_ITERATIONS=5          # 最大迭代次数
-MIN_SAMPLE_SIZE=2         # 最小样本数量
 ```
 
 更多配置选项请查看 `.env.example` 文件。
