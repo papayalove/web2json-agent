@@ -17,8 +17,8 @@ def cmd_init(args):
 
     print("\n下一步:")
     print(f"  1. 编辑 {env_file}")
-    print("  2. 填入你的 API 密钥")
-    print("  3. 运行 'web2json check' 验证配置")
+    print("  2. 填入你的 API 密钥（OPENAI_API_KEY 和 OPENAI_API_BASE）")
+    print("  3. 运行 'web2json check --test-api' 检查API响应")
     print()
 
 
