@@ -1,62 +1,132 @@
 # web2json-agent
 
-智能网页解析代码生成器 - 基于 AI 自动生成网页解析代码
+**让 AI 自动生成网页解析代码，告别手写 XPath 和 CSS 选择器**
 
-## 简介
+## 💡 项目简介
 
-**web2json-agent** 是一个基于 LangChain 的智能 Agent 系统，通过多模态 AI 自动分析网页结构并生成高质量的 Python 解析代码。
+**web2json-agent** 是一个基于 AI 的智能代码生成工具，能够**自动分析网页结构并生成高质量的 Python 解析代码**。
 
-### 核心能力
+### ✨ 核心价值
 
-提供几个示例 HTML 文件，Agent 自动完成：
+传统方式开发网页解析器，你需要：
+- ❌ 手动分析 HTML 结构，费时费力
+- ❌ 逐个编写 XPath 或 CSS 选择器，容易出错
+- ❌ 反复调试选择器，适配不同页面结构
+- ❌ 处理数据结构和类型转换的繁琐代码
 
-1. 📁 读取本地HTML文件并精简
-2. 📸 渲染HTML并截图（DrissionPage）
-3. 🔍 双重Schema提取（HTML分析 + 视觉理解）
-4. 🔄 智能Schema合并与优化
-5. 💻 生成 BeautifulSoup 解析代码
+使用 **web2json-agent**，你只需要：
+- ✅ 提供 2-5 个示例 HTML 文件
+- ✅ 等待 1-2 分钟
+- ✅ 获得可直接使用的解析器代码
 
-### 适用场景
+**节省 80% 的开发时间，从几小时到几分钟！**
 
-- 批量爬取同类型网页（博客、产品页、新闻等）
-- 快速生成解析代码原型
-- 减少手动编写解析器的时间
+### 🎯 核心亮点
 
-## 工作流程
+1. **🤖 完全自动化** - 无需手写 XPath、CSS 选择器或解析逻辑
+2. **👁️ 多模态分析** - 结合 HTML 代码分析和视觉理解，提取更准确
+3. **🛡️ 高鲁棒性** - 自动生成多个备选提取路径，适应页面结构变化
+4. **📦 开箱即用** - 生成的代码可直接运行，支持 CLI 和 Python 导入
+5. **🔄 智能优化** - 自动去除广告、导航等无效字段，优化数据结构
+
+### 📋 示例
+
+**输入：26 万字符的杂乱 HTML**（深度嵌套、无意义 class、大量广告和噪音）
+```html
+<html class="itcauecng idc0_347">
+<head>
+  <title>海南自贸港12月18日即将封关，「零关税」和「双15%」个税优惠政策...</title>
+  <!-- ...省略 50+ 个 meta/link/script 标签... -->
+</head>
+<body>
+  <div id="root" class="_2Jysd8SG _3kRqKz4Q">
+    <div class="GlobalSideBar _1mQ9vkP3">...</div>  <!-- 导航栏 -->
+    <div class="TopBar _2pWmP1eX">...</div>          <!-- 搜索框 -->
+
+    <main>
+      <!-- 问题标题buried在 5 层 div 嵌套中 -->
+      <div class="QuestionHeader">
+        <div class="QuestionHeader-content">
+          <div class="QuestionHeader-main">
+            <h1 class="QuestionHeader-title">海南自贸港12月18日即将封关...</h1>
+            <div class="QuestionRichText--collapsed">
+              <div class="RichText">
+                <span>12月18日，海南自由贸易港将正式启动...</span>
+      <!-- ...6 层嵌套... -->
+              </div></div></div></div></div>
+
+      <!-- 回答列表，每个回答有 5+ 层嵌套 -->
+      <div class="List-list">
+        <div class="List-item">
+          <div class="ContentItem AnswerItem">
+            <div class="ContentItem-main">
+              <div class="RichContent">
+                <div class="AuthorInfo-name">Saka财经</div>
+                <div class="AuthorInfo-badge">CPA 注册会计师资格证持证人</div>
+                <span class="RichText">海南这次一定要接住这个橄榄枝...</span>
+      <!-- ...更多嵌套... -->
+              </div></div></div></div>
+        <!-- ...省略其他 53 个回答... -->
+      </div>
+
+      <aside>
+        <div class="AdCard">...</div>  <!-- 广告 -->
+        <div class="AdCard">...</div>  <!-- 广告 -->
+      </aside>
+    </main>
+  </div>
+  <script>window.__INITIAL_STATE__={"entities":{...}}</script>  <!-- 数万字符 -->
+</body>
+</html>
+```
+
+**输出：干净的结构化 JSON**（AI 自动识别核心内容，过滤噪音）
+```json
+{
+  "title": "海南自贸港12月18日即将封关，「零关税」和「双15%」个税优惠政策将有什么变化？...",
+  "question_author": "每日经济新闻",
+  "question_author_badge": "已认证机构号",
+  "question_description": "12月18日，海南自由贸易港将正式启动全岛封关运作...",
+  "topics": ["投资", "商业", "股票", "海南", "海纳百川开放共赢"],
+  "view_count": "183,426",
+  "answer_count": "54 个回答",
+  "answers": [
+    {
+      "author": "Saka财经",
+      "author_badge": "CPA 注册会计师资格证持证人",
+      "content": "海南这次一定要接住这个橄榄枝，飞速发展的机会...",
+      "publish_time": "编辑于 2025-12-16 15:42"
+    },
+    {
+      "author": "闻号说经济",
+      "author_badge": "CFA 注册金融分析师资格证持证人",
+      "content": "2025年12月18日，海南自贸港将正式启动全岛封关运作...",
+      "publish_time": "发布于 2025-12-16 12:31"
+    },
+    {
+      "other": "其他回答省略"
+    }
+  ]
+}
+```
+
+✨ **自动识别并提取**：标题、作者、话题标签、统计数据、**回答列表**（包含嵌套的作者信息、内容、时间等）
+
+### 🚀 适用场景
+
+- **批量爬虫开发** - 快速为博客、产品页、新闻等同类型页面生成解析器
+- **数据采集项目** - 减少手动编写解析器的重复劳动
+- **原型验证** - 快速验证数据提取可行性，再优化细节
+- **学习参考** - 生成的代码可作为学习 BeautifulSoup 和 XPath 的参考示例
+
+### 🔧 工作流程
 
 ```
-本地HTML文件 → 任务规划 → Schema迭代阶段（对每个HTML）
-                    ├─ 读取HTML文件 + 截图（DrissionPage）
-                    ├─ HTML精简（减少token消耗）
-                    ├─ HTML → Schema（含xpath路径）
-                    ├─ 视觉 → Schema（含视觉描述）
-                    └─ 合并两个Schema
-         ↓
-    多Schema合并（筛选+修正+去重）→ 最终Schema
-         ↓
-    代码迭代阶段 → 生成/优化解析代码 → 最终代码
+提供示例HTML → AI自动分析 → 生成解析器代码
+    (2-5个)      (1-2分钟)      (可直接使用)
 ```
 
-### Schema迭代规则
-
-**对于单个HTML（建议输入2～5个）：**
-1. **HTML分析**：从HTML代码提取Schema（字段名、说明、值示例、**xpath路径**）
-2. **视觉分析**：从网页截图提取Schema（字段名、说明、值示例、**视觉描述**）
-3. **Schema合并**：判断相同字段，合并xpath和visual_features
-
-**处理完所有HTML后：**
-4. **多Schema整合**：
-   - 去除无意义字段（广告、导航等）
-   - 修正字段结构（元信息归属、列表字段识别）
-   - 合并xpath路径（每个字段包含多个xpath，增强鲁棒性）
-   - 生成最终Schema
-
-### 核心技术
-
-- **双重视角Schema提取**：同时从HTML代码和视觉布局提取Schema，互相补充
-- **多路径鲁棒性**：每个字段保留多个xpath提取路径，适应不同页面结构
-- **智能Schema合并**：自动识别相同字段、修正字段类型、优化数据结构
-- **HTML精简**：使用自定义HTML精简工具，减少token消耗，提升响应速度
+**内部流程**：双重分析（HTML + 视觉）→ Schema 提取 → 智能合并 → 代码生成
 
 ---
 
@@ -68,72 +138,21 @@
 
 适合**直接使用**工具的用户
 
-#### 第 1 步：安装包
-
 ```bash
+# 1. 安装包
 pip install web2json-agent
-```
 
-#### 第 2 步：初始化配置
+# 2. 初始化配置
+web2json setup  # 交互式配置（推荐）
+# 或手动配置：web2json init && vim .env
 
-**选项 A：交互式配置向导（推荐）**
-```bash
-web2json setup
-# 按提示输入 API 密钥和配置
-```
-
-**选项 B：手动配置**
-```bash
-# 创建配置文件模板
-web2json init
-
-# 编辑 .env 文件，填入你的 API 配置
-vim .env  # 或者手动修改
-```
-
-**必填配置项**（在 `.env` 文件中修改）：
-```bash
-OPENAI_API_KEY=your_api_key_here          # 你的 API 密钥
-OPENAI_API_BASE=https://api.openai.com/v1  # API 地址
-```
-
-#### 第 3 步：验证配置
-
-```bash
-# 检查配置
-web2json check
-
-# 测试 API 连接（推荐）
-web2json check --test-api
-```
-
-#### 第 4 步：准备 HTML 文件
-
-在任意目录下放置 **2-5 个**同类型网页的 HTML 源码文件：
-
-```bash
-mkdir html_samples
-# 将 HTML 文件放入 html_samples/ 目录
-```
-
-#### 第 5 步：生成解析器
-
-```bash
-# 基础用法
+# 3. 准备HTML文件并生成解析器
+mkdir html_samples  # 放入 2-5 个同类型HTML文件
 web2json -d html_samples/ -o output/blog
 
-# 指定页面类型（可选）
-web2json -d html_samples/ -o output/blog --domain blog_article
-```
-
-#### 第 6 步：使用生成的解析器
-
-```bash
-# 解析单个文件
-python output/blog/final_parser.py example.html
-
-# 解析URL
-python output/blog/final_parser.py https://example.com/article
+# 4. 使用生成的解析器
+python output/blog/final_parser.py example.html              # 解析HTML文件
+python output/blog/final_parser.py https://example.com       # 解析URL
 ```
 
 ---
@@ -142,116 +161,35 @@ python output/blog/final_parser.py https://example.com/article
 
 适合**开发者**和**贡献者**
 
-#### 第 1 步：克隆项目并安装依赖
-
 ```bash
-# 克隆项目
+# 1. 克隆项目并安装依赖
 git clone https://github.com/ccprocessor/web2json-agent.git
 cd web2json-agent
-
-# 安装依赖
 pip install -r requirements.txt
-```
 
-#### 第 2 步：配置 API 密钥（⚠️ 必需）
-
-```bash
-# 复制配置模板
+# 2. 配置 API 密钥
 cp .env.example .env
+vim .env  # 填入 OPENAI_API_KEY 和 OPENAI_API_BASE
 
-# 编辑 .env 文件，填入你的 API 配置
-vim .env  # 或使用其他编辑器
-```
+# 3. 生成解析器（html_samples/ 目录已有示例）
+python main.py -d html_samples/ -o output/blog
 
-**必填配置项**（在 `.env` 文件中修改）：
-
-```bash
-OPENAI_API_KEY=your_api_key_here          # 你的 API 密钥
-OPENAI_API_BASE=https://api.openai.com/v1  # API 地址
-```
-> 更多配置选项请查看 `.env.example` 文件
-
-#### 第 3 步：准备 HTML 文件
-
-在 `input_html/` 目录下放置 **2-5 个**同类型网页的 HTML 源码文件（已有示例）
-
-#### 第 4 步：运行解析器生成
-
-```bash
-# 基础用法
-python main.py -d input_html/ -o output/blog
-
-# 指定页面类型（可选）
-python main.py -d input_html/ -o output/blog --domain blog_article
-```
-
-#### 第 5 步：使用生成的解析器
-
-生成完成后，解析器代码保存在 `output/blog/final_parser.py`
-
-**使用方式 A：使用 demo.py（推荐）**
-
-项目根目录提供了通用的 `demo.py` 脚本，自动查找最新的解析器：
-
-```bash
-# 自动使用最新的解析器解析单个文件
-python demo.py example.html
-
-# 批量解析目录
-python demo.py -d input_html/
-
-# 批量解析并保存结果
-python demo.py -d input_html/ -o results.json
-
-# 指定特定的解析器
-python demo.py -p output/blog/final_parser.py example.html
-
-# 解析URL（需要安装 DrissionPage）
-python demo.py https://example.com/article
-```
-
-**使用方式 B：直接运行 final_parser.py**
-
-生成的解析器可以直接作为命令行工具使用：
-
-```bash
-# 解析单个文件
-python output/blog/final_parser.py example.html
-
-# 解析URL
-python output/blog/final_parser.py https://example.com/article
-```
-
-**使用方式 C：在你的代码中导入**
-
-```python
-import sys
-from pathlib import Path
-
-# 添加解析器路径
-sys.path.insert(0, 'output/blog')
-from final_parser import WebPageParser
-
-# 使用解析器
-html_content = Path('example.html').read_text(encoding='utf-8')
-parser = WebPageParser()
-data = parser.parse(html_content)
-print(data)
+# 4. 使用生成的解析器
+python output/blog/final_parser.py example.html              # 解析HTML文件
+python output/blog/final_parser.py https://example.com       # 解析URL
 ```
 
 ---
 
 ## 💡 使用技巧
 
-- **HTML 文件数量**：建议准备 2-5 个同类型页面，太少提取不准，太多增加成本
-- **快速上手**：直接使用根目录的 `demo.py`，会自动找到最新的解析器
-- **批量处理**：`python demo.py -d html_dir -o results.json` 可批量解析并保存结果
+- **HTML 文件数量**：输入 2-5 个同类型页面即可得到比较好的解析效果
 - **查看中间结果**：生成过程中的 Schema 和截图都保存在 `output/` 目录中
-- **调整模型配置**：如果结果不理想，可以在 `.env` 中更换更强大的模型
+- **调整模型配置**：Schema 生成/代码生成阶段使用的模型可以在 `.env` 中修改
 
 ---
 
-## 项目结构
+## 📁 项目结构
 
 ```
 web2json-agent/
@@ -294,13 +232,12 @@ web2json-agent/
 │       └── final_parser.py    # 最终解析器（可直接运行）
 │
 ├── main.py                # 命令行入口
-├── demo.py                # 通用Demo脚本（使用解析器）
 └── requirements.txt       # 依赖列表
 ```
 
 ---
 
-## Schema格式说明
+## 📋 Schema格式说明
 
 ### 最终Schema结构
 
@@ -341,27 +278,24 @@ web2json-agent/
 
 ---
 
-## 返回值说明
+## 📤 返回值说明
 
 `generate_parser()` 返回：
 
 ```python
 {
     'success': bool,              # 是否成功
+    'plan': dict,                 # 执行计划
+    'execution_result': dict,     # 执行结果（包含两阶段迭代详情）
+    'summary': str,               # 执行总结
     'parser_path': str,           # 解析器路径
-    'config_path': str,           # 配置文件路径
-    'validation_result': {        # 验证结果
-        'success': bool,
-        'success_rate': float,    # 成功率 (0.0-1.0)
-        'tests': [...]            # 测试详情
-    },
-    'error': str                  # 错误信息（如果失败）
+    'config_path': str            # 配置文件路径
 }
 ```
 
 ---
 
-## 许可证
+## 📄 许可证
 
 MIT License
 
@@ -369,36 +303,3 @@ MIT License
 
 **最后更新**: 2025-12-18
 **版本**: 1.0.2
-
-## 更新日志
-
-### v1.0.2 (2025-12-18)
-- 🐛 **修复pip安装后，API配置读取的问题**
-
-### v1.0.1 (2025-12-18)
-- 🐛 修复本地HTML文件截图失败问题
-  - 添加body元素等待机制
-  - 添加页面尺寸检查和警告
-  - 添加截图重试机制（最多2次）
-  - 优化浏览器参数：禁用同源策略以支持本地文件加载
-- ✨ 改进错误处理：即使页面加载不完整也能继续执行
-
-### v1.0.0 (2025-12-18)
-- ✨ 更清晰的模块结构：每个模块职责单一明确
-- ✅ 完善交互：新增配置验证和交互式设置
-- ✨ 双重视角Schema提取（HTML + 视觉）
-- ✨ 支持多xpath路径，增强解析鲁棒性
-- ✨ 智能Schema合并和结构优化
-- ✨ 集成HTML精简工具，减少token消耗以及冗余输入
-
-### v0.2.0 (2025-12-12)
-- ✨ 新增双重视角Schema提取（HTML + 视觉）
-- ✨ 支持多xpath路径，增强解析鲁棒性
-- ✨ 智能Schema合并和结构优化
-- ✨ 集成HTML精简工具，减少token消耗以及冗余输入
-
-### v0.1.0 (2025-11-26)
-- 🎉 首次发布
-- 基于视觉理解的Schema提取
-- 自动代码生成和迭代优化
-
