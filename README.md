@@ -6,86 +6,6 @@
 
 **web2json-agent** 是一个基于 AI 的智能代码生成工具，能够**自动分析网页结构并生成高质量的 Python 解析代码**。
 
-### 📋 示例
-
-**输入：复杂的 HTML 网页**（知乎问答页面，充满杂乱标签和噪音）
-```html
-<!doctype html>
-<html lang="zh" data-hairline="true" data-apple="true" class="itcauecng" data-theme="light">
-<head>
-  <meta charSet="utf-8"/>
-  <title>海南自贸港12月18日即将封关，「零关税」和「双15%」个税优惠政策将有什么变化？...</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
-  <meta name="renderer" content="webkit"/>
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
-  <!-- ...大量meta标签、link标签等噪音... -->
-</head>
-<body>
-  <div class="question-header">
-    <h1>海南自贸港12月18日即将封关，「零关税」和「双15%」个税优惠政策...</h1>
-    <div class="author">每日经济新闻 <span class="badge">已认证机构号</span></div>
-    <div class="question-detail">12月18日，海南自由贸易港将正式启动...</div>
-    <div class="tags">
-      <a>投资</a><a>商业</a><a>股票</a><a>海南</a>
-    </div>
-    <div class="stats">183,426 次浏览 • 54 个回答</div>
-  </div>
-
-  <!-- 回答列表 -->
-  <div class="answer-list">
-    <article class="answer">
-      <div class="author-info">
-        <span class="name">Saka财经</span>
-        <span class="badge">CPA 注册会计师资格证持证人</span>
-      </div>
-      <div class="content">海南这次一定要接住这个橄榄枝，飞速发展的机会...</div>
-      <div class="meta">编辑于 2025-12-16 15:42</div>
-    </article>
-
-    <article class="answer">
-      <div class="author-info">
-        <span class="name">闻号说经济</span>
-        <span class="badge">CFA 注册金融分析师资格证持证人</span>
-      </div>
-      <div class="content">2025年12月18日，海南自贸港将正式启动全岛封关运作...</div>
-      <div class="meta">发布于 2025-12-16 12:31</div>
-    </article>
-  </div>
-
-  <!-- ...更多广告、导航、推荐内容等噪音... -->
-</body>
-</html>
-```
-
-**输出：干净的结构化 JSON**（自动提取核心内容，过滤噪音，识别复杂的嵌套结构）
-```json
-{
-  "title": "海南自贸港12月18日即将封关，「零关税」和「双15%」个税优惠政策将有什么变化？...",
-  "question_author": "每日经济新闻",
-  "question_author_badge": "已认证机构号",
-  "question_description": "12月18日，海南自由贸易港将正式启动全岛封关运作...",
-  "topics": ["投资", "商业", "股票", "海南", "海纳百川开放共赢"],
-  "view_count": "183,426",
-  "answer_count": "54 个回答",
-  "answers": [
-    {
-      "author": "Saka财经",
-      "author_badge": "CPA 注册会计师资格证持证人",
-      "content": "海南这次一定要接住这个橄榄枝，飞速发展的机会...",
-      "publish_time": "编辑于 2025-12-16 15:42"
-    },
-    {
-      "author": "闻号说经济",
-      "author_badge": "CFA 注册金融分析师资格证持证人",
-      "content": "2025年12月18日，海南自贸港将正式启动全岛封关运作...",
-      "publish_time": "发布于 2025-12-16 12:31"
-    }
-  ]
-}
-```
-
-✨ **自动识别并提取**：标题、作者、话题标签、统计数据、**回答列表**（包含嵌套的作者信息、内容、时间等）
-
 ### ✨ 核心价值
 
 传统方式开发网页解析器，你需要：
@@ -108,6 +28,89 @@
 3. **🛡️ 高鲁棒性** - 自动生成多个备选提取路径，适应页面结构变化
 4. **📦 开箱即用** - 生成的代码可直接运行，支持 CLI 和 Python 导入
 5. **🔄 智能优化** - 自动去除广告、导航等无效字段，优化数据结构
+
+### 📋 示例
+
+**输入：26 万字符的杂乱 HTML**（深度嵌套、无意义 class、大量广告和噪音）
+```html
+<html class="itcauecng idc0_347">
+<head>
+  <title>海南自贸港12月18日即将封关，「零关税」和「双15%」个税优惠政策...</title>
+  <!-- ...省略 50+ 个 meta/link/script 标签... -->
+</head>
+<body>
+  <div id="root" class="_2Jysd8SG _3kRqKz4Q">
+    <div class="GlobalSideBar _1mQ9vkP3">...</div>  <!-- 导航栏 -->
+    <div class="TopBar _2pWmP1eX">...</div>          <!-- 搜索框 -->
+
+    <main>
+      <!-- 问题标题buried在 5 层 div 嵌套中 -->
+      <div class="QuestionHeader">
+        <div class="QuestionHeader-content">
+          <div class="QuestionHeader-main">
+            <h1 class="QuestionHeader-title">海南自贸港12月18日即将封关...</h1>
+            <div class="QuestionRichText--collapsed">
+              <div class="RichText">
+                <span>12月18日，海南自由贸易港将正式启动...</span>
+      <!-- ...6 层嵌套... -->
+              </div></div></div></div></div>
+
+      <!-- 回答列表，每个回答有 5+ 层嵌套 -->
+      <div class="List-list">
+        <div class="List-item">
+          <div class="ContentItem AnswerItem">
+            <div class="ContentItem-main">
+              <div class="RichContent">
+                <div class="AuthorInfo-name">Saka财经</div>
+                <div class="AuthorInfo-badge">CPA 注册会计师资格证持证人</div>
+                <span class="RichText">海南这次一定要接住这个橄榄枝...</span>
+      <!-- ...更多嵌套... -->
+              </div></div></div></div>
+        <!-- ...省略其他 53 个回答... -->
+      </div>
+
+      <aside>
+        <div class="AdCard">...</div>  <!-- 广告 -->
+        <div class="AdCard">...</div>  <!-- 广告 -->
+      </aside>
+    </main>
+  </div>
+  <script>window.__INITIAL_STATE__={"entities":{...}}</script>  <!-- 数万字符 -->
+</body>
+</html>
+```
+
+**输出：干净的结构化 JSON**（AI 自动识别核心内容，过滤噪音）
+```json
+{
+  "title": "海南自贸港12月18日即将封关，「零关税」和「双15%」个税优惠政策将有什么变化？...",
+  "question_author": "每日经济新闻",
+  "question_author_badge": "已认证机构号",
+  "question_description": "12月18日，海南自由贸易港将正式启动全岛封关运作...",
+  "topics": ["投资", "商业", "股票", "海南", "海纳百川开放共赢"],
+  "view_count": "183,426",
+  "answer_count": "54 个回答",
+  "answers": [
+    {
+      "author": "Saka财经",
+      "author_badge": "CPA 注册会计师资格证持证人",
+      "content": "海南这次一定要接住这个橄榄枝，飞速发展的机会...",
+      "publish_time": "编辑于 2025-12-16 15:42"
+    },
+    {
+      "author": "闻号说经济",
+      "author_badge": "CFA 注册金融分析师资格证持证人",
+      "content": "2025年12月18日，海南自贸港将正式启动全岛封关运作...",
+      "publish_time": "发布于 2025-12-16 12:31"
+    },
+    {
+      "other": "其他回答省略"
+    }
+  ]
+}
+```
+
+✨ **自动识别并提取**：标题、作者、话题标签、统计数据、**回答列表**（包含嵌套的作者信息、内容、时间等）
 
 ### 🚀 适用场景
 
@@ -300,35 +303,3 @@ MIT License
 
 **最后更新**: 2025-12-18
 **版本**: 1.0.2
-
-## 📝 更新日志
-
-### v1.0.2 (2025-12-18)
-- 🐛 **修复pip安装后，API配置读取的问题**
-
-### v1.0.1 (2025-12-18)
-- 🐛 修复本地HTML文件截图失败问题
-  - 添加body元素等待机制
-  - 添加页面尺寸检查和警告
-  - 添加截图重试机制（最多2次）
-  - 优化浏览器参数：禁用同源策略以支持本地文件加载
-- ✨ 改进错误处理：即使页面加载不完整也能继续执行
-
-### v1.0.0 (2025-12-18)
-- ✨ 更清晰的模块结构：每个模块职责单一明确
-- ✅ 完善交互：新增配置验证和交互式设置
-- ✨ 双重视角Schema提取（HTML + 视觉）
-- ✨ 支持多xpath路径，增强解析鲁棒性
-- ✨ 智能Schema合并和结构优化
-- ✨ 集成HTML精简工具，减少token消耗以及冗余输入
-
-### v0.2.0 (2025-12-12)
-- ✨ 新增双重视角Schema提取（HTML + 视觉）
-- ✨ 支持多xpath路径，增强解析鲁棒性
-- ✨ 智能Schema合并和结构优化
-- ✨ 集成HTML精简工具，减少token消耗以及冗余输入
-
-### v0.1.0 (2025-11-26)
-- 🎉 首次发布
-- 基于视觉理解的Schema提取
-- 自动代码生成和迭代优化
