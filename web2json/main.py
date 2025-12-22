@@ -7,8 +7,8 @@ import argparse
 import warnings
 from pathlib import Path
 from loguru import logger
-from agent import ParserAgent
-from tools.cluster import cluster_html_layouts
+from web2json.agent import ParserAgent
+from web2json.tools.cluster import cluster_html_layouts
 
 # 过滤 LangSmith UUID v7 警告
 warnings.filterwarnings('ignore', message='.*LangSmith now uses UUID v7.*')
