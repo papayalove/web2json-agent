@@ -7,9 +7,9 @@ import os
 from pathlib import Path
 from typing import Dict
 from loguru import logger
-from config.settings import settings
+from web2json.config.settings import settings
 from langchain_core.tools import tool
-from prompts.code_generator import CodeGeneratorPrompts
+from web2json.prompts.code_generator import CodeGeneratorPrompts
 
 
 @tool

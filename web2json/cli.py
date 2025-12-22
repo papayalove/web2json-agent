@@ -5,7 +5,7 @@ web2json-agent CLI 入口点
 import sys
 import argparse
 from pathlib import Path
-from config.validator import ConfigValidator, check_config_or_guide
+from web2json.config.validator import ConfigValidator, check_config_or_guide
 
 
 def cmd_init(args):

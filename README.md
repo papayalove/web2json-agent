@@ -146,9 +146,11 @@ web2json setup  # 交互式配置（推荐）
 # 或手动配置：web2json init && vim .env
 
 # 3. 准备网页目录并一键生成解析器+批量解析
-web2json -d html_samples/ -o output/blog
+web2json -d html_samples/ -o output/result
 
-# 完成！解析结果自动保存到 output/blog/result/ 目录
+# 或者使用如下命令
+python -m web2json.main -d input_html/ -o output/result
+# 完成！解析结果自动保存到 output/result/ 目录
 ```
 
 **执行过程说明**：
