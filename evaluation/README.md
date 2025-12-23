@@ -322,10 +322,32 @@ F1 = 2 * (Precision * Recall) / (Precision + Recall)
 
 ## Matching Strategy
 
-The evaluation uses **substring matching**: if a groundtruth value is contained in an extracted value, it's considered a match. This accounts for:
-- Extra whitespace
-- Case differences
-- Additional extracted text around the target value
+The evaluation uses **value-based matching** instead of key-based matching:
+
+### Value-Based Matching (Current)
+1. **Extract all values** from the agent's JSON output (regardless of key names)
+2. **Search for groundtruth values** in the extracted values using substring matching
+3. **Match if found**: If a groundtruth value is contained in any extracted value, it's a match
+4. **Deduplicate**: Duplicate values in JSON are counted only once
+
+**Why value-based matching?**
+- Agent-generated JSON keys may not match groundtruth attribute names
+- More flexible and robust to schema variations
+- Focuses on whether the correct information was extracted, not where it was placed
+
+### Substring Matching Rules
+- Groundtruth value is contained in extracted value → Match
+- Case-insensitive comparison
+- Whitespace normalization
+- Accounts for extra text around the target value
+
+**Example:**
+```
+Groundtruth: "1.6L I-4 16V DOHC"
+JSON value: "1.6L I-4 16V DOHC" → ✓ Match
+JSON value: "Engine: 1.6L I-4 16V DOHC Turbocharged" → ✓ Match (substring)
+JSON value: "1.6L I-4" → ✗ No match (incomplete)
+```
 
 ## Module Structure
 
@@ -366,6 +388,9 @@ Add methods to `ExtractionMetrics` class in `metrics.py`.
 
 ### Customize reports
 Modify `visualization.py` to change report format or add new visualizations.
+
+### Switch matching strategy
+The default is value-based matching (searches all JSON values). To revert to key-based matching (matches by field names), modify `evaluator.py:extract_matching_values()`.
 
 ## Troubleshooting
 
