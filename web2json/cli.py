@@ -107,7 +107,9 @@ def cmd_generate(args):
     result = agent.generate_parser(
         html_files=html_files,
         domain=args.domain,
-        iteration_rounds=getattr(args, 'iteration_rounds', None)
+        iteration_rounds=getattr(args, 'iteration_rounds', None),
+        schema_mode=getattr(args, 'schema_mode', None),
+        schema_template=getattr(args, 'schema_template', None)
     )
 
     # 输出结果
@@ -189,6 +191,15 @@ def main():
         '--iteration-rounds',
         type=int,
         help='迭代轮数（用于Schema学习的样本数量，默认: 3）'
+    )
+    parser.add_argument(
+        '--schema-mode',
+        choices=['auto', 'predefined'],
+        help='Schema模式：auto=自动提取和筛选字段，predefined=使用预定义schema模板（默认: auto）'
+    )
+    parser.add_argument(
+        '--schema-template',
+        help='预定义schema模板文件路径（JSON格式，当schema-mode=predefined时必需）'
     )
     parser.add_argument(
         '--cluster',

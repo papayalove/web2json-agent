@@ -309,3 +309,71 @@ def merge_multiple_schemas(schemas: List[Dict]) -> Dict:
         logger.error(error_msg)
         logger.error(f"详细错误: {traceback.format_exc()}")
         raise Exception(error_msg)
+
+
+@tool
+def enrich_schema_with_xpath(schema_template: Dict, html_content: str) -> Dict:
+    """
+    为预定义的Schema模板补充xpath和value_sample信息
+
+    用于预定义模式，保持用户定义的字段key不变，只补充技术细节
+
+    Args:
+        schema_template: 预定义的Schema模板（包含字段key、type、description）
+        html_content: HTML内容
+
+    Returns:
+        dict: 补充了xpath和value_sample的完整Schema
+    """
+    try:
+        logger.info(f"正在为预定义Schema补充xpath信息（{len(schema_template)} 个字段）...")
+
+        # 1. 获取Prompt
+        prompt = SchemaExtractionPrompts.get_schema_enrichment_prompt()
+
+        # 2. 构建消息
+        schema_str = json.dumps(schema_template, ensure_ascii=False, indent=2)
+        user_message = f"{prompt}\n\n## Schema模板\n\n```json\n{schema_str}\n```\n\n## HTML内容\n\n```html\n{html_content[:50000]}\n```"
+
+        # 3. 调用LLM
+        model = ChatOpenAI(
+            model=settings.default_model,
+            api_key=os.getenv("OPENAI_API_KEY"),
+            base_url=os.getenv("OPENAI_API_BASE"),
+            temperature=0.1
+        )
+
+        messages = [
+            {"role": "system", "content": "你是一个专业的HTML分析和XPath专家。"},
+            {"role": "user", "content": user_message}
+        ]
+
+        response = model.invoke(messages)
+
+        # 4. 解析响应
+        if hasattr(response, 'content'):
+            content = response.content
+        else:
+            content = str(response)
+
+        result = _parse_llm_response(content)
+
+        # 5. 验证返回的字段是否与模板一致
+        template_keys = set(schema_template.keys())
+        result_keys = set(result.keys())
+        if template_keys != result_keys:
+            logger.warning(f"返回的Schema字段与模板不一致")
+            logger.warning(f"  模板字段: {template_keys}")
+            logger.warning(f"  返回字段: {result_keys}")
+            logger.warning(f"  缺失字段: {template_keys - result_keys}")
+            logger.warning(f"  多余字段: {result_keys - template_keys}")
+
+        logger.success(f"成功为预定义Schema补充xpath信息")
+        return result
+
+    except Exception as e:
+        import traceback
+        error_msg = f"Schema补充失败: {str(e)}"
+        logger.error(error_msg)
+        logger.error(f"详细错误: {traceback.format_exc()}")
+        raise Exception(error_msg)

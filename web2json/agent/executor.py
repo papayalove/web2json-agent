@@ -19,16 +19,27 @@ from web2json.tools import (
     generate_parser_code,  # 生成解析代码工具
     extract_schema_from_html,  # 从HTML提取Schema
     merge_multiple_schemas,  # 合并多个HTML的Schema
+    enrich_schema_with_xpath,  # 为预定义Schema补充xpath
 )
 from web2json.tools.html_simplifier import simplify_html  # HTML精简工具
 
 
 class AgentExecutor:
     """Agent执行器，负责执行具体任务"""
-    
-    def __init__(self, output_dir: str = "output"):
+
+    def __init__(self, output_dir: str = "output", schema_mode: str = "auto", schema_template: Dict = None):
+        """
+        初始化执行器
+
+        Args:
+            output_dir: 输出目录
+            schema_mode: Schema模式 (auto: 自动提取, predefined: 使用预定义模板)
+            schema_template: 预定义的Schema模板（当schema_mode=predefined时使用）
+        """
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.schema_mode = schema_mode
+        self.schema_template = schema_template
 
         # 创建子目录
         self.screenshots_dir = self.output_dir / "screenshots"
@@ -48,6 +59,12 @@ class AgentExecutor:
         logger.info(f"输出目录已创建：")
         logger.info(f"  - 原始HTML: {self.html_original_dir}")
         logger.info(f"  - 精简HTML: {self.html_simplified_dir}")
+        logger.info(f"  - Schema模式: {self.schema_mode}")
+
+        if self.schema_mode == "predefined":
+            if not self.schema_template:
+                raise ValueError("预定义模式需要提供schema_template")
+            logger.info(f"  - 预定义Schema字段: {list(self.schema_template.keys())}")
     
     def execute_plan(self, plan: Dict) -> Dict:
         """
@@ -84,18 +101,27 @@ class AgentExecutor:
 
         # 阶段1: Schema迭代（使用所有URL）
         logger.info(f"\n{'='*70}")
-        logger.info(f"阶段1: Schema迭代（{num_urls}个URL，{num_urls}轮迭代）")
+        if self.schema_mode == "auto":
+            logger.info(f"阶段1: Schema迭代 - 自动模式（{num_urls}个URL，{num_urls}轮迭代）")
+        else:
+            logger.info(f"阶段1: Schema补充 - 预定义模式（{num_urls}个URL，{num_urls}轮迭代）")
         logger.info(f"{'='*70}")
 
-        schema_result = self._execute_schema_iteration_phase(sample_urls)
+        if self.schema_mode == "auto":
+            # 自动模式：提取和合并schema
+            schema_result = self._execute_schema_iteration_phase(sample_urls)
+        else:
+            # 预定义模式：使用模板并补充xpath
+            schema_result = self._execute_predefined_schema_phase(sample_urls)
+
         results['schema_phase'] = schema_result
 
         if not schema_result['success']:
-            logger.error("Schema迭代阶段失败")
+            logger.error("Schema阶段失败")
             return results
 
         final_schema = schema_result['final_schema']
-        logger.success(f"Schema迭代完成，最终Schema包含 {len(final_schema)} 个字段")
+        logger.success(f"Schema阶段完成，最终Schema包含 {len(final_schema)} 个字段")
 
         # 阶段2: 代码迭代（复用Schema阶段的HTML）
         logger.info(f"\n{'='*70}")
@@ -368,6 +394,183 @@ class AgentExecutor:
                 logger.error(f"合并多个Schema失败: {str(e)}")
                 import traceback
                 logger.debug(traceback.format_exc())
+
+        return result
+
+    def _execute_predefined_schema_phase(self, html_files: List[str]) -> Dict:
+        """
+        执行预定义Schema补充阶段
+
+        使用用户提供的Schema模板，为每个HTML补充xpath和value_sample
+
+        Args:
+            html_files: HTML文件路径列表
+
+        Returns:
+            Schema补充结果
+        """
+        result = {
+            'rounds': [],
+            'final_schema': None,
+            'success': False,
+        }
+
+        logger.info(f"\n{'═'*70}")
+        logger.info(f"预定义Schema模式")
+        logger.info(f"  - Schema模板字段: {list(self.schema_template.keys())}")
+        logger.info(f"{'═'*70}")
+
+        # ============ 阶段1：批量精简所有HTML ============
+        logger.info(f"\n{'═'*70}")
+        logger.info(f"阶段1/3: 批量精简HTML文件")
+        logger.info(f"{'═'*70}")
+
+        simplified_data_list = []
+        for idx, html_file_path in enumerate(html_files, 1):
+            logger.info(f"  正在精简 [{idx}/{len(html_files)}]: {Path(html_file_path).name}")
+            simplified_data = self._simplify_html_file(html_file_path, idx)
+            if simplified_data['success']:
+                simplified_data_list.append(simplified_data)
+            else:
+                logger.error(f"HTML精简失败: {html_file_path}")
+                if idx == 1:
+                    return result
+
+        if not simplified_data_list:
+            logger.error("没有成功精简的HTML文件")
+            return result
+
+        logger.success(f"✓ 已精简 {len(simplified_data_list)} 个HTML文件")
+
+        # ============ 阶段2：并行为每个HTML补充xpath ============
+        logger.info(f"\n{'═'*70}")
+        logger.info(f"阶段2/3: 并行为预定义Schema补充xpath")
+        logger.info(f"  - 并发处理 {len(simplified_data_list)} 个HTML")
+        logger.info(f"  - 最大并发数: {min(settings.max_concurrent_extractions, len(simplified_data_list))}")
+        logger.info(f"{'═'*70}")
+
+        enriched_results = []
+        # 使用配置的并发数，避免API限流
+        max_workers = min(settings.max_concurrent_extractions, len(simplified_data_list))
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_to_data = {
+                executor.submit(self._enrich_single_schema, data): data
+                for data in simplified_data_list
+            }
+
+            for future in as_completed(future_to_data):
+                enrich_result = future.result()
+                if enrich_result['success']:
+                    enriched_results.append(enrich_result)
+
+        # 按idx排序
+        enriched_results.sort(key=lambda x: x['idx'])
+        logger.success(f"✓ 已为 {len(enriched_results)} 个HTML补充xpath")
+
+        if not enriched_results:
+            logger.error("没有成功补充xpath的Schema")
+            return result
+
+        # ============ 构建轮次结果 ============
+        all_enriched_schemas = []
+        for i, simplified in enumerate(simplified_data_list):
+            idx = simplified['idx']
+            html_file_path = simplified['html_file']
+
+            # 查找对应的enriched结果
+            enrich_result = next((r for r in enriched_results if r['idx'] == idx), None)
+
+            if enrich_result:
+                enriched_schema = enrich_result['enriched_schema']
+                all_enriched_schemas.append(enriched_schema)
+
+                round_result = {
+                    'round': idx,
+                    'html_file': html_file_path,
+                    'url': html_file_path,
+                    'html_original_path': simplified['html_original_path'],
+                    'html_path': simplified['html_path'],
+                    'html_schema': enriched_schema.copy(),
+                    'html_schema_path': enrich_result['schema_path'],
+                    'schema': enriched_schema.copy(),
+                    'schema_path': enrich_result['schema_path'],
+                    'groundtruth_schema': enriched_schema.copy(),
+                    'success': True,
+                }
+                result['rounds'].append(round_result)
+
+        # ============ 阶段3：合并多个enriched schema，生成最终Schema ============
+        if all_enriched_schemas:
+            logger.info(f"\n{'═'*70}")
+            logger.info(f"阶段3/3: 生成最终Schema")
+            logger.info(f"  - 合并 {len(all_enriched_schemas)} 个补充后的Schema")
+            logger.info(f"{'═'*70}")
+
+            try:
+                # 使用merge策略合并多个enriched schema
+                final_schema = merge_multiple_schemas.invoke({
+                    "schemas": all_enriched_schemas
+                })
+                logger.success(f"✓ 最终Schema已生成，包含 {len(final_schema)} 个字段")
+
+                # 保存最终Schema
+                final_schema_path = self.schemas_dir / "final_schema.json"
+                with open(final_schema_path, 'w', encoding='utf-8') as f:
+                    json.dump(final_schema, f, ensure_ascii=False, indent=2)
+                logger.success(f"✓ 最终Schema已保存: {final_schema_path}")
+
+                result['final_schema'] = final_schema
+                result['final_schema_path'] = str(final_schema_path)
+                result['success'] = True
+
+            except Exception as e:
+                logger.error(f"合并多个Schema失败: {str(e)}")
+                import traceback
+                logger.debug(traceback.format_exc())
+
+        return result
+
+    def _enrich_single_schema(self, html_data: Dict) -> Dict:
+        """
+        为单个HTML的预定义Schema补充xpath
+
+        Args:
+            html_data: 准备好的HTML数据
+
+        Returns:
+            包含enriched_schema的结果
+        """
+        idx = html_data['idx']
+        result = {
+            'success': False,
+            'idx': idx,
+        }
+
+        try:
+            html_content = html_data['html_content']
+
+            logger.info(f"[补充阶段 {idx}] 为预定义Schema补充xpath...")
+            enriched_schema = enrich_schema_with_xpath.invoke({
+                "schema_template": self.schema_template,
+                "html_content": html_content
+            })
+
+            logger.success(f"[补充阶段 {idx}] ✓ Schema补充完成（{len(enriched_schema)} 字段）")
+
+            # 保存schema
+            schema_path = self.schemas_dir / f"enriched_schema_round_{idx}.json"
+            with open(schema_path, 'w', encoding='utf-8') as f:
+                json.dump(enriched_schema, f, ensure_ascii=False, indent=2)
+
+            result.update({
+                'success': True,
+                'enriched_schema': enriched_schema,
+                'schema_path': str(schema_path),
+            })
+
+        except Exception as e:
+            logger.error(f"[补充阶段 {idx}] ✗ 失败: {str(e)}")
+            result['error'] = str(e)
 
         return result
 

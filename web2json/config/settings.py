@@ -55,6 +55,9 @@ class Settings(BaseModel):
     # 默认迭代轮数（用于Schema学习的样本数量）
     default_iteration_rounds: int = Field(default_factory=lambda: int(os.getenv("DEFAULT_ITERATION_ROUNDS", "3")))
 
+    # Schema模式 (auto: 自动提取和筛选字段, predefined: 使用预定义schema模板)
+    schema_mode: str = Field(default_factory=lambda: os.getenv("SCHEMA_MODE", "auto"))
+
     # 并发控制
     max_concurrent_extractions: int = Field(default_factory=lambda: int(os.getenv("MAX_CONCURRENT_EXTRACTIONS", "5")))
     max_concurrent_merges: int = Field(default_factory=lambda: int(os.getenv("MAX_CONCURRENT_MERGES", "5")))
