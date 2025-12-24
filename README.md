@@ -159,6 +159,70 @@ web2json -d html_samples/ -o output/result
 
 ---
 
+## 🎯 Schema模式
+
+web2json-agent 支持两种Schema模式，满足不同场景需求：
+
+### 模式1：自动模式 (auto) - 默认
+
+**适用场景**：快速探索，不确定需要提取哪些字段
+
+```bash
+# 使用默认自动模式
+web2json -d html_samples/ -o output/result
+```
+
+- ✅ Agent自动分析HTML，智能判断并筛选有价值的字段
+- ✅ 自动过滤广告、导航等无关元素
+- ✅ 适合快速上手，无需预先定义Schema
+
+### 模式2：预定义模式 (predefined)
+
+**适用场景**：明确知道需要提取哪些字段，需要精确控制输出结构
+
+**步骤1：创建Schema模板**（`schema_template.json`）
+```json
+{
+  "title": {
+    "type": "string",
+    "description": "文章标题"
+  },
+  "author": {
+    "type": "string",
+    "description": "作者姓名"
+  },
+  "content": {
+    "type": "string",
+    "description": "文章正文内容"
+  }
+}
+```
+
+**步骤2：使用预定义模式**
+```bash
+web2json -d html_samples/ -o output/result \
+  --schema-mode predefined \
+  --schema-template schema_template.json
+```
+
+- ✅ 用户预先定义字段（key、type、description）
+- ✅ Agent只补充技术细节（xpath、value_sample）
+- ✅ 输出结构完全固定，适合生产环境
+- ✅ 字段key保持不变，确保下游系统兼容
+
+**模式对比**：
+
+| 特性 | 自动模式 | 预定义模式 |
+|------|---------|-----------|
+| 字段来源 | Agent自动发现 | 用户预定义 |
+| 输出稳定性 | 可能变化 | 完全固定 |
+| 使用门槛 | 低（零配置） | 中（需定义模板） |
+| 适用场景 | 快速探索、原型 | 生产环境、精确控制 |
+
+📚 **详细文档**：参见 `docs/schema_modes.md` 和 `docs/schema_template_example.json`
+
+---
+
 ## 📄 许可证
 
 MIT License

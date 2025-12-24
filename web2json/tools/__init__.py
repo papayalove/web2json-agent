@@ -9,7 +9,8 @@ from .schema_extraction import (
     extract_schema_from_html,
     # extract_schema_from_image,  # 已禁用视觉Schema提取
     # merge_html_and_visual_schema,  # 已禁用HTML和视觉Schema合并
-    merge_multiple_schemas
+    merge_multiple_schemas,
+    enrich_schema_with_xpath
 )
 from .cluster import cluster_html_layouts
 from .html_layout_cosin import get_feature, similarity
@@ -23,6 +24,7 @@ __all__ = [
     # 'extract_schema_from_image',  # 已禁用
     # 'merge_html_and_visual_schema',  # 已禁用
     'merge_multiple_schemas',
+    'enrich_schema_with_xpath',
     'cluster_html_layouts',
     'get_feature',
     'similarity',
