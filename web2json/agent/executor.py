@@ -56,11 +56,6 @@ class AgentExecutor:
         self.result_dir.mkdir(exist_ok=True)
         self.schemas_dir.mkdir(exist_ok=True)
 
-        logger.info(f"输出目录已创建：")
-        logger.info(f"  - 原始HTML: {self.html_original_dir}")
-        logger.info(f"  - 精简HTML: {self.html_simplified_dir}")
-        logger.info(f"  - Schema模式: {self.schema_mode}")
-
         if self.schema_mode == "predefined":
             if not self.schema_template:
                 raise ValueError("预定义模式需要提供schema_template")

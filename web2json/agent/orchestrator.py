@@ -37,7 +37,6 @@ class ParserAgent:
         )
         self.output_dir = Path(output_dir)
 
-        logger.info(f"ParserAgent 初始化完成（Schema模式: {self.schema_mode}）")
 
     def generate_parser(
         self,
@@ -169,7 +168,6 @@ class ParserAgent:
         # 解析器生成结果
         if execution_result.get('final_parser'):
             parser_path = execution_result['final_parser']['parser_path']
-            lines.append(f"\n最终解析器路径: {parser_path}")
 
         # 批量解析结果
         if parse_result:
