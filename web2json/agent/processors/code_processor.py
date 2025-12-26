@@ -67,14 +67,11 @@ class CodeProcessor(BaseProcessor):
 
             # 如果是优化模式（有上一轮的代码）
             if previous_parser_code:
-                logger.info(f"  [2/2] 优化解析代码（基于上一轮）...")
                 invoke_params.update({
                     "previous_parser_code": previous_parser_code,
                     "previous_parser_path": previous_parser_path,
                     "round_num": idx
                 })
-            else:
-                logger.info(f"  [2/2] 生成初始解析代码...")
 
             # 调用代码生成工具
             parser_result = generate_parser_code.invoke(invoke_params)
@@ -85,7 +82,7 @@ class CodeProcessor(BaseProcessor):
             with open(parser_path, 'w', encoding='utf-8') as f:
                 f.write(parser_result['code'])
 
-            logger.success(f"  ✓ 解析代码已生成: {parser_filename}")
+            logger.success(f"  ✓ 已生成: {parser_filename}")
 
             result.update({
                 'success': True,

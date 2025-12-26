@@ -86,12 +86,14 @@ class CodePhase(BasePhase):
                     logger.error(f"  ✗ Schema阶段第 {idx} 轮缺少HTML路径")
                     continue
 
-                logger.info(f"  [1/2] 复用Schema阶段的精简HTML")
                 with open(html_path, 'r', encoding='utf-8') as f:
                     html_content = f.read()
-                logger.success(f"  ✓ 精简HTML已加载（长度: {len(html_content)} 字符）")
 
                 # 生成或优化解析代码
+                if idx == 1:
+                    logger.info(f"  生成初始解析代码...")
+                else:
+                    logger.info(f"  优化解析代码（基于第 {idx-1} 轮）...")
                 code_result = self.code_processor.process({
                     'html_content': html_content,
                     'target_json': final_schema,

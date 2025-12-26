@@ -132,10 +132,6 @@ class ParserAgent:
         logger.info("\n[步骤 4/4] 生成总结")
         summary = self._generate_summary(execution_result, parse_result)
 
-        logger.info("="*70)
-        logger.success("解析器生成完成!")
-        logger.info("="*70)
-
         return {
             'success': True,
             'plan': plan,

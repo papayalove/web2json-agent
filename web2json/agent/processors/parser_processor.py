@@ -49,9 +49,8 @@ class ParserProcessor(BaseProcessor):
         parser_path = input_data['parser_path']
 
         logger.info(f"\n{'='*70}")
-        logger.info(f"批量解析阶段：使用生成的解析器解析所有HTML文件")
+        logger.info(f"批量解析阶段：解析 {len(html_files)} 个 HTML 文件")
         logger.info(f"{'='*70}")
-        logger.info(f"总文件数: {len(html_files)}")
 
         results = {
             'success': True,
@@ -63,12 +62,7 @@ class ParserProcessor(BaseProcessor):
 
         try:
             # 加载解析器
-            logger.info("\n加载解析器...")
             parser = self._load_parser(parser_path)
-            logger.success("解析器加载成功")
-
-            # 批量解析所有 HTML 文件
-            logger.info(f"\n开始批量解析 {len(html_files)} 个HTML文件...")
 
             # 使用进度条显示解析进度
             with tqdm(total=len(html_files), desc="解析HTML文件", unit="file") as pbar:

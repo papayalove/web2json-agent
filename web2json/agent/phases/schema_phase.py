@@ -96,11 +96,9 @@ class SchemaPhase(BasePhase):
         # ============ 步骤 2：并行提取/补充 Schema ============
         logger.info(f"\n{'═'*70}")
         if self.schema_mode == "auto":
-            logger.info(f"阶段2/3: 并行提取HTML Schema")
+            logger.info(f"阶段2/3: 并行提取 HTML Schema（并发数: {min(settings.max_concurrent_extractions, len(simplified_data_list))}）")
         else:
-            logger.info(f"阶段2/3: 并行为预定义Schema补充xpath")
-        logger.info(f"  - 并发处理 {len(simplified_data_list)} 个HTML")
-        logger.info(f"  - 最大并发数: {min(settings.max_concurrent_extractions, len(simplified_data_list))}")
+            logger.info(f"阶段2/3: 并行补充 xpath（并发数: {min(settings.max_concurrent_extractions, len(simplified_data_list))}）")
         logger.info(f"{'═'*70}")
 
         schema_results = []
@@ -159,8 +157,7 @@ class SchemaPhase(BasePhase):
         # ============ 步骤 3：合并多个 Schema，生成最终 Schema ============
         if all_schemas:
             logger.info(f"\n{'═'*70}")
-            logger.info(f"阶段3/3: 生成最终Schema")
-            logger.info(f"  - 合并 {len(all_schemas)} 个Schema")
+            logger.info(f"阶段3/3: 合并 {len(all_schemas)} 个 Schema")
             logger.info(f"{'═'*70}")
 
             try:
