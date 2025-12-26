@@ -49,6 +49,69 @@ def remove_reversely(element_list: List[html.HtmlElement]):
 # HTML 精简处理函数
 # ============================================
 
+def unwrap_forms(root: html.HtmlElement) -> html.HtmlElement:
+    """
+    解包 form 标签，保留其子内容
+
+    将 form 标签替换为其子元素，避免删除 form 时丢失 ASP.NET 等网站的全部内容。
+    这样既移除了 form 包装层（及其 ViewState 等冗余），又保留了所有内容结构。
+
+    Args:
+        root: HTML 根元素
+
+    Returns:
+        处理后的 HTML 根元素
+    """
+    # 查找所有 form 标签（从下往上处理，避免嵌套 form 问题）
+    forms = root.xpath('.//form')
+
+    for form in reversed(forms):
+        parent = form.getparent()
+        if parent is None:
+            continue
+
+        # 获取 form 在父节点中的位置
+        try:
+            index = list(parent).index(form)
+        except ValueError:
+            continue
+
+        # 保存 form 的 tail 文本（form 标签后的文本）
+        tail_text = form.tail
+
+        # 将 form 的所有子元素移动到父节点中
+        children = list(form)
+        for child in reversed(children):
+            parent.insert(index, child)
+
+        # 如果 form 有前置文本，合并到前一个兄弟节点或父节点
+        if form.text and form.text.strip():
+            if index > 0:
+                prev_sibling = parent[index - 1]
+                if prev_sibling.tail:
+                    prev_sibling.tail += form.text
+                else:
+                    prev_sibling.tail = form.text
+            else:
+                if parent.text:
+                    parent.text += form.text
+                else:
+                    parent.text = form.text
+
+        # 移除空的 form 标签
+        parent.remove(form)
+
+        # 恢复 tail 文本到第一个插入的子元素
+        if tail_text and children:
+            first_child = parent[index]
+            if first_child.tail:
+                first_child.tail += tail_text
+            else:
+                first_child.tail = tail_text
+
+    return root
+
+
 def remove_tags_by_types(root: html.HtmlElement, tag_type_list: List[str]) -> html.HtmlElement:
     """
     删除指定类型的标签
@@ -195,10 +258,10 @@ def simplify_html_minimal(
             'script', 'noscript', 'iframe', 'embed', 'object',
             # 导航和布局
             'nav', 'aside', 'footer', 'header',
-            # 表单元素（通常不需要）
+            # 表单元素（通常不需要）- 注意：form 标签会被 unwrap 处理，不在删除列表中
             'button', 'datalist', 'fieldset', 'input', 'label',
             'legend', 'meter', 'optgroup', 'option', 'output',
-            'progress', 'select', 'textarea', 'form',
+            'progress', 'select', 'textarea',
             # 其他
             'canvas', 'dialog', 'source', 'track',
         ]
@@ -207,23 +270,26 @@ def simplify_html_minimal(
         # 1. 解析 HTML
         root = html_to_element(html_str)
 
-        # 2. 删除指定的标签
+        # 2. 解包 form 标签（保留内容，移除包装）
+        root = unwrap_forms(root)
+
+        # 3. 删除指定的标签
         if remove_tags:
             root = remove_tags_by_types(root, remove_tags)
 
-        # 3. 删除不可见元素
+        # 4. 删除不可见元素
         if remove_invisible:
             root = remove_invisible_tags(root)
 
-        # 4. 删除空标签
+        # 5. 删除空标签
         if remove_empty:
             root = remove_empty_tags(root)
 
-        # 5. 清理属性
+        # 6. 清理属性
         if clean_attrs:
             root = clean_attributes(root, keep_attrs)
 
-        # 6. 转换回 HTML 字符串
+        # 7. 转换回 HTML 字符串
         result = element_to_html(root)
 
         return result
@@ -274,6 +340,7 @@ def simplify_html(
         # xpath模式：为xpath提取优化
         if mode == 'xpath':
             # 删除明确无用的标签，但保留可能有内容的标签
+            # 注意：form 标签会被 unwrap 处理，不在删除列表中
             remove_tags_list = [
                 # 头部和元数据
                 'base', 'head', 'link', 'meta', 'style', 'title',
@@ -282,7 +349,7 @@ def simplify_html(
                 # 表单元素（通常不需要）
                 'button', 'datalist', 'fieldset', 'input', 'label',
                 'legend', 'meter', 'optgroup', 'option', 'output',
-                'progress', 'select', 'textarea', 'form',
+                'progress', 'select', 'textarea',
                 # 其他
                 'canvas', 'dialog', 'source', 'track',
             ]
